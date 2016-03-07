@@ -1,0 +1,93 @@
+<div class="wrapper">
+  <div class="loading-status">Loading Weather...</div>
+  <div class="weather-form">
+    <form id="go-weather-form">
+      <div class="form-group">
+        <label for="postcode">Postcode</label>
+        <input type="text" class="form-control" id="postcode" placeholder="postcode">
+      </div>
+      <button type="submit" class="go-weather btn btn-default">Submit</button>
+    </form>
+  </div>
+  <div class="weather-info">
+    <img src="" class="icon" />
+    <h1 class="title"></h1>
+    <div class="description"></div>
+  </div>
+</div>
+<script>
+jQuery(document).ready(function(){
+
+  function update_status(message){
+    $('.loading-status').html(message);
+  }
+
+  function update_weather(data){
+    var icon = 'http://openweathermap.org/img/w/'+data.weather[0]['icon']+'.png';
+    $('.weather-info').fadeIn();
+    $('.icon').attr('src',icon);
+    $('.title').html(data.weather.name+' / <small>'+data.weather[0]['main']+'</small>');
+    $('.description').html(data.weather[0]['description']);
+    $('.loading-status').fadeOut();
+  }
+
+  function fetch_data(data){
+    jQuery.ajax({
+        data: data,
+        type: 'GET',
+        url: 'http://api.openweathermap.org/data/2.5/weather',
+        success: function(data){
+          console.log(data);
+          update_status('Loading weather...');
+          update_weather(data);
+        }
+    });// end ajax
+  }
+
+  function get_weather_by_geo(latitude,longitude,accuracy){
+    var data = {
+      lat:latitude,
+      lon:longitude,
+      APPID: 'ce69fec27365d923752393181516ecff'
+    };
+    fetch_data(data);
+  }
+
+  $('.go-weather').click(function(){
+    var postcode  = $('#postcode').val()+',us';
+
+    if(postcode.length > 0){
+      var data = {
+        zip: postcode
+      }
+      fetch_data(data)
+    }else if(postcode.length > 0){
+      alert('Please enter postcode');
+    }
+    return false;
+  });
+
+  if (navigator.geolocation) {
+     navigator.geolocation.getCurrentPosition(LocationCallBack);
+     navigator.geolocation.watchPosition(function(position) {
+       console.log("watch for click");
+     },
+     function (error) {
+       if (error.code == error.PERMISSION_DENIED)
+           console.log("show form");
+           $('.weather-form').show();
+           $('.loading-status').fadeOut();
+     });
+  }else{
+    // not supported
+  }
+
+  function LocationCallBack(location){
+    update_status('Fetching weather...');
+    var latitude  = location.coords.latitude;
+    var longitude = location.coords.longitude;
+    var accuracy  = location.coords.accuracy;
+    get_weather_by_geo(latitude,longitude,accuracy);
+  }
+});
+</script>
